@@ -16,7 +16,7 @@ jobs:
     env:
       AWS_REGION: us-east-1
       ECR_REPOSITORY: web-app
-
+      TASK_DEFINITION: web-task-definition
 
     steps:
       - name: Checkout Repository
@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "📦 Downloading ECS task definition..."
           aws ecs describe-task-definition \
-            --task-definition web-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION }} \
             --region ${{ env.AWS_REGION }} \
             --query 'taskDefinition' > task-definition.json
           echo "✅ Task definition downloaded!"
