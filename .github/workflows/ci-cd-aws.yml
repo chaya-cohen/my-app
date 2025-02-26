@@ -41,8 +41,9 @@ jobs:
       - name: Download and Clean Task Definition
         run: |
           aws ecs describe-task-definition --task-definition web-task-definition \
-          --query 'taskDefinition.{family:family, taskRoleArn:taskRoleArn, executionRoleArn:executionRoleArn, networkMode:networkMode, containerDefinitions:containerDefinitions, volumes:volumes, placementConstraints:placementConstraints, requiresCompatibilities:requiresCompatibilities, cpu:cpu, memory:memory, tags:tags, pidMode:pidMode, ipcMode:ipcMode, proxyConfiguration:proxyConfiguration, inferenceAccelerators:inferenceAccelerators, ephemeralStorage:ephemeralStorage, runtimePlatform:runtimePlatform, enableFaultInjection:enableFaultInjection}' \
+          --query 'taskDefinition.{family:family, taskRoleArn:taskRoleArn || `""`, executionRoleArn:executionRoleArn || `""`, networkMode:networkMode, containerDefinitions:containerDefinitions, volumes:volumes, placementConstraints:placementConstraints, requiresCompatibilities:requiresCompatibilities, cpu:cpu, memory:memory, tags:tags || [], pidMode:pidMode || `""`, ipcMode:ipcMode || `""`, proxyConfiguration:proxyConfiguration || `{}`, inferenceAccelerators:inferenceAccelerators || [], ephemeralStorage:ephemeralStorage || `{}`, runtimePlatform:runtimePlatform}' \
           > ecs-task-definition.json
+
 
       - name: Update Task Definition Image
         id: task-def
