@@ -78,6 +78,6 @@ jobs:
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.SERVICE_NAME }}
-          cluster: $${{ env.CLUSTER }}
+          cluster: ${{ env.CLUSTER }}
           wait-for-service-stability: true
           force-new-deployment: true
