@@ -41,14 +41,20 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Download task definition 📥
+      - name: Download and Clean Task Definition 📥
         run: |
           echo "📦 Downloading ECS task definition..."
           aws ecs describe-task-definition \
             --task-definition web-task-definition \
-            --region us-east-1 \
-            --query taskDefinition > task-definition.json
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition' > task-definition.json
           echo "✅ Task definition downloaded!"
+
+          echo "🧹 Cleaning Task Definition..."
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .enableFaultInjection)' task-definition.json > cleaned-task-definition.json
+          mv cleaned-task-definition.json task-definition.json
+          echo "✅ Task definition cleaned!"
+
 
 
       - name: Update Task Definition Image
@@ -57,14 +63,14 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: web-container
-          image: ${{ steps.login-ecr.outputs.registry }}/web-app:${{ github.sha }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
-      - name: Validate task definition ✨
+      - name: Validate task definition 
         run: |
           echo "🔍 Validating task definition..."
           jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' task-definition.json > cleaned-task-definition.json
           mv cleaned-task-definition.json task-definition.json
-          echo "✅ Task definition validated!"
+          echo " Task definition validated !"
 
       - name: Deploy to ECS 🚀
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
