@@ -20,8 +20,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsECRRole
-          role-session-name: GitHubActionsECR
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionPushECR
+          role-session-name: GithubActionPushECR
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
@@ -36,3 +36,30 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Download Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition web-task-definition \
+          --query taskDefinition > ecs-task-definition.json
+
+      - name: Update Task Definition Image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs-task-definition.json
+          container-name: web-app
+          image: ${{ steps.login-ecr.outputs.registry }}/web-app:${{ github.sha }}
+
+      - name: Register New Task Definition
+        id: register-task
+        run: |
+          TASK_DEFINITION_ARN=$(aws ecs register-task-definition --cli-input-json file://ecs-task-definition.json \
+          --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "TASK_DEFINITION_ARN=$TASK_DEFINITION_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service --cluster webCluster \
+          --service web-service \
+          --task-definition $TASK_DEFINITION_ARN \
+          --force-new-deployment
