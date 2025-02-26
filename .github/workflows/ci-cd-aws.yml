@@ -17,6 +17,9 @@ jobs:
       AWS_REGION: us-east-1
       ECR_REPOSITORY: web-app
       TASK_DEFINITION: web-task-definition
+      SERVICE_NAME: web-service
+      CLUSTER: webCluster
+      CONTAINER_NAME: web-container
 
     steps:
       - name: Checkout Repository
@@ -55,14 +58,12 @@ jobs:
           mv cleaned-task-definition.json task-definition.json
           echo "✅ Task definition cleaned!"
 
-
-
       - name: Update Task Definition Image
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: web-container
+          container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Validate task definition 
@@ -76,7 +77,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: web-service
-          cluster: webCluster
+          service: ${{ env.SERVICE_NAME }}
+          cluster: $${{ env.CLUSTER }}
           wait-for-service-stability: true
           force-new-deployment: true
