@@ -63,9 +63,11 @@ jobs:
           mv cleaned-task-definition.json task-definition.json
           echo "✅ Task definition validated!"
 
-      - name: Update ECS Service
-        run: |
-          aws ecs update-service --cluster webCluster \
-          --service web-service \
-          --task-definition $TASK_DEFINITION_ARN \
-          --force-new-deployment
+      - name: Deploy to ECS 🚀
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: web-service
+          cluster: webCluster
+          wait-for-service-stability: true
+          force-new-deployment: true
