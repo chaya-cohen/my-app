@@ -13,6 +13,9 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+
 
     steps:
       - name: Checkout Repository
@@ -23,7 +26,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionCi-CD-Rol
           role-session-name: GithubActionCi-CD-Rol
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -59,7 +62,7 @@ jobs:
       - name: Validate task definition ✨
         run: |
           echo "🔍 Validating task definition..."
-          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .enableFaultInjection)' task-definition.json > cleaned-task-definition.json
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' task-definition.json > cleaned-task-definition.json
           mv cleaned-task-definition.json task-definition.json
           echo "✅ Task definition validated!"
 
