@@ -1,0 +1,41 @@
+name: Run Tests on Push to Development
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - development
+  workflow_dispatch:
+  
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      contents: read
+      checks: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: |
+          npm run test
+          TEST_EXIT_CODE=$?
+
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            exit 1
+          fi
