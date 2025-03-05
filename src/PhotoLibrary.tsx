@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 
 // Custom type for images with additional details
@@ -18,6 +18,38 @@ export default function PhotoLibrary() {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [visibleImages, setVisibleImages] = useState<number>(12);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/get-images");
+        const result = await response.json();
+        if (response.ok) {
+          setImages([])
+          setImages((prev) => [
+            ...prev,
+            ...result.images.map((url: string) => ({
+              file: { name: url.split("/").pop()!, size: 0, type: "" } as File,
+              preview: url,
+              title: "",
+              description: "",
+              lastModified: 0,
+              lastModifiedDate: new Date(),
+              name: url.split("/").pop()!,
+              size: 0,
+              type: "",
+            })),
+          ]);
+        } else {
+          console.error("Error fetching images:", result.error);
+        }
+      } catch (error) {
+        console.error("Error fetching images:", error);
+      }
+    };
+
+    fetchImages();
+  }, []);
 
   const onDrop = (acceptedFiles: File[]) => {
     acceptedFiles.forEach(async (file) => {
@@ -53,7 +85,7 @@ export default function PhotoLibrary() {
         console.error("Error uploading file:", error);
       }
     });
-  };  
+  };
 
   const { getInputProps } = useDropzone({
     onDrop,
@@ -91,7 +123,7 @@ export default function PhotoLibrary() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-      </div> 
+      </div>
 
       <div className="image-grid-wrapper">
         <div className="image-grid">
